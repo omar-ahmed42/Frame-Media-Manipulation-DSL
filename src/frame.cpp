@@ -12,7 +12,11 @@ int main(int argc, const char* argv[])
     //std::ifstream infile("scripts/sharpen.frame");
     //std::ifstream infile("scripts/blur.frame");
     ////std::ifstream infile("scripts/normalize.frame");
-    std::ifstream infile("scripts/noise_reduction.frame");
+    //std::ifstream infile("scripts/noise_reduction.frame");
+    std::ifstream infile("scripts/embed_subtitles.frame");
+    //std::ifstream infile("scripts/adding_subtitles.frame");
+    //std::ifstream infile("scripts/extract_N_subtitles_from_video.frame");
+    //std::ifstream infile("scripts/extract_Kth_subtitles_from_video.frame");
     //std::ifstream infile("scripts/setting_framerate.frame");
     //std::ifstream infile("scripts/normalize.frame");
     //std::ifstream infile("scripts/bass.frame");
