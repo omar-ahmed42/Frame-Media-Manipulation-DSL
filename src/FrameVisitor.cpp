@@ -1270,11 +1270,6 @@
 
      std::string numberOfSubtitles = ctx->INT()->getText();
      eraseSpace(numberOfSubtitles);
-     // Check el max size of subtitles fel video
-    /* if (std::stoi(heightValue) > 16000.0 || std::stoi(heightValue) < 1) {
-         std::cout << "Action at line " << ctx->start->getLine() << ": height value has to be between 1 and 16000";
-         exit(0);
-     }*/ 
 
      if (ctx->STRING() != NULL)
      {
@@ -1293,29 +1288,28 @@
              : media.directory;
      }
 
-     // generateSubtitlesStreamMapping
-     std::string subtitlesStream = "";
-     for (int i = 0; i < std::stoi(numberOfSubtitles); i++) {
-         subtitlesStream += " -map 0:s:" + std::to_string(i);
-     }
-
+     
      if (exists)
      {
-             std::string newFilePath = directory + constructName + "%05d.srt";
-             std::string TempFilePath = directory + constructName + "Temp%05d.srt";
+             // generateSubtitlesStreamMapping
+             std::string subtitlesStream = "";
+             std::string newFilesPaths = "";
+             // mapping each required subtitle stream
+             // making each stream optional (in case N > the actual number of subtitles) to avoid errors "0:s:0?" the '?' makes it optional
+             for (int i = 0; i < std::stoi(numberOfSubtitles); i++) { 
+                 subtitlesStream += " -map \"0:s:" + std::to_string(i) + "?\" " + " \"" + directory + constructName + std::to_string(i) + ".srt" + "\" ";
+             }
+            
              //FFMPEG COMMAND
              std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
-                 + " -i \"" + media.path + "\"" + subtitlesStream +
-                 + " \"" + TempFilePath + "\"";
+                 + " -i \"" + media.path + "\"" + subtitlesStream;
              if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
              else
              {
                  // Suppress the system call
                  cmd += " >nul 2>nul";
              }
-             system(cmd.c_str());
-             std::filesystem::remove(newFilePath);
-             std::filesystem::rename(TempFilePath, newFilePath);         
+             system(cmd.c_str());        
      }
      else
      {
@@ -1351,11 +1345,6 @@
 
      std::string kthSubtitleValue = ctx->INT()->getText();
      eraseSpace(kthSubtitleValue);
-     // Check el max size of subtitles fel video
-    /* if (std::stoi(heightValue) > 16000.0 || std::stoi(heightValue) < 1) {
-         std::cout << "Action at line " << ctx->start->getLine() << ": height value has to be between 1 and 16000";
-         exit(0);
-     }*/
 
      if (ctx->STRING() != NULL)
      {
@@ -1378,11 +1367,10 @@
      if (exists)
      {
          std::string newFilePath = directory + constructName + kthSubtitleValue + ".srt";
-         std::string TempFilePath = directory + constructName + "Temp%05d.srt";
          //FFMPEG COMMAND
          std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
-             + " -i \"" + media.path + "\"" + " -map 0:s:" + kthSubtitleValue +
-             +" \"" + TempFilePath + "\"";
+             + " -i \"" + media.path + "\"" + " -map \"0:s:" + std::to_string(std::stoi(kthSubtitleValue) - 1) + "?\"" +
+             +" \"" + newFilePath + "\"";
          if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
          else
          {
@@ -1390,8 +1378,6 @@
              cmd += " >nul 2>nul";
          }
          system(cmd.c_str());
-         std::filesystem::remove(newFilePath);
-         std::filesystem::rename(TempFilePath, newFilePath);
      }
      else
      {
@@ -1402,6 +1388,7 @@
  }
 
  //add_subtitles_to_video: ADD SUBTITLES STRING FOR NAME (AS NAME)? (SAVE_TO STRING)? #addingSubtitlesToVideo
+//ffmpeg -y -i boo_empty_previously_subtitles.mp4 -i marvel.srt -i shockzart.srt -map "0:v?" -map "0:a?" -map "0:s?" -map 1 -map 2 -c copy -c:s mov_text boo_append_subtitles.mp4
  antlrcpp::Any FrameVisitor:: visitAddingSubtitlesToVideo(FrameParser::AddingSubtitlesToVideoContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
@@ -1432,11 +1419,20 @@
      { //handle it
          std::string subtitleDirectory = subtitlePath;
          subtitleDirectory = subtitleDirectory.substr(1, subtitleDirectory.length() - 2);
-         if (!std::filesystem::exists(subtitleDirectory) && !std::filesystem::is_regular_file(subtitleDirectory))
+
+         if (!std::filesystem::exists(subtitleDirectory) || !std::filesystem::is_regular_file(subtitleDirectory))
          {
              std::cout << "Line " << ctx->start->getLine() << ": Invalid subtitle path";
              exit(0);
          }
+
+         std::string subtitleFormat = subtitleDirectory; // save subtitle directory to check its format later in an if condition
+         subtitleFormat = subtitleFormat.substr(subtitleFormat.rfind('.') + 1);
+         if (subtitleFormat != "srt") 
+         {
+             std::cout << "Line " << ctx->start->getLine() << ": Invalid subtitle file format";
+             exit(0);
+        }
      }
 
      if (ctx->STRING()[1] != NULL)
@@ -1461,11 +1457,12 @@
      {
          if (ctx->AS() != NULL)
          {
-
+             //ffmpeg -y -i boo_empty_previously_subtitles.mp4 -i marvel.srt -i shockzart.srt -map "0:v?" -map "0:a?" -map "0:s?" -map 1 -map 2 -c copy -c:s mov_text boo_append_subtitles.mp4
              std::string newFilePath = directory + ctx->NAME()[1]->getText() + "." + media.format;
              //FFMPEG command
              std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
-                 + " -i \"" + media.path + "\"" + " -i " + subtitlePath + (frm::options.reencode ? std::string("") : std::string(" -c:s copy "))
+                 + " -i \"" + media.path + "\"" + " -i " + subtitlePath + " -map \"0:v?\" -map \"0:a?\" -map \"0:s?\" -map 1 "
+                 + std::string(" -c copy -c:s mov_text")
                  + " \"" + newFilePath + "\"";
              if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
              else
@@ -1484,7 +1481,8 @@
              std::string TempFilePath = directory + constructName + "Temp." + media.format;
              //FFMPEG COMMAND
              std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
-                 + " -i \"" + media.path + "\"" + " -i " + subtitlePath + (frm::options.reencode ? std::string("") : std::string(" -c:s copy "))
+                 + " -i \"" + media.path + "\"" + " -i " + subtitlePath + " -map \"0:v?\" -map \"0:a?\" -map \"0:s?\" -map 1 "
+                 + std::string(" -c:s move_text")
                  + " \"" + TempFilePath + "\"";
              if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
              else
@@ -3273,7 +3271,7 @@
  antlrcpp::Any FrameVisitor:: visitEmbeddingSubtitles(FrameParser::EmbeddingSubtitlesContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Adding subtitles to " << constructName + "...\n";
+     std::cout << "Embedding subtitles in " << constructName + "...\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3281,14 +3279,14 @@
      if (media.type == AUDIO)
      {
          //Error message
-         std::cout << "Action at line " << ctx->start->getLine() << ": Can't add subtitles to audio type";
+         std::cout << "Action at line " << ctx->start->getLine() << ": Cannot embed subtitles in audio type";
          exit(0);
      }
 
      if (media.type == FRAME)
      {
          //Error message
-         std::cout << "Action at line " << ctx->start->getLine() << ": Can't add subtitles to frame type";
+         std::cout << "Action at line " << ctx->start->getLine() << ": Cannot embed subtitles in frame type";
          exit(0);
      }
 
@@ -3300,11 +3298,32 @@
      { //handle it
          std::string subtitleDirectory = subtitlePath;
          subtitleDirectory = subtitleDirectory.substr(1, subtitleDirectory.length() - 2);
-         if (!std::filesystem::exists(subtitleDirectory) && !std::filesystem::is_regular_file(subtitleDirectory))
+         if (!std::filesystem::exists(subtitleDirectory) || !std::filesystem::is_regular_file(subtitleDirectory))
          {
              std::cout << "Line " << ctx->start->getLine() << ": Invalid subtitle path";
              exit(0);
          }
+
+         std::string subtitleFormat = subtitleDirectory; // save subtitle directory to check its format later in an if condition
+         subtitleFormat = subtitleFormat.substr(subtitleFormat.rfind('.') + 1);
+         if (subtitleFormat != "srt")
+         {
+             std::cout << "Line " << ctx->start->getLine() << ": Invalid subtitle file format";
+             exit(0);
+         }
+
+         std::string temp = subtitlePath;
+
+         for (int i = subtitlePath.length() - 1; i >= 0; i--) { // escape every ':' and '\' as ffmpeg rejects unescaped absolute paths
+             if (subtitlePath[i] == '\\') {
+                 temp.insert(i, "\\\\\\");
+             }
+             if (subtitlePath[i] == ':') {
+                 temp.insert(i, "\\\\");
+             }
+         }
+
+         subtitlePath = temp; // Path to be used in the cmd command
      }
 
      if (ctx->STRING()[1] != NULL)
