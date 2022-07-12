@@ -1095,7 +1095,140 @@ antlrcpp::Any FrameVisitor::visitMergingAudioWithVideo(FrameParser::MergingAudio
 }
 
 antlrcpp::Any FrameVisitor::visitConcatentating(FrameParser::ConcatentatingContext* ctx) {
+    std::vector<antlr4::tree::TerminalNode*> nodes = ctx->NAME();
+    int constCount = (ctx->AS() != NULL ? ctx->NAME().size() - 1 : ctx->NAME().size());
+    std::vector<Media> constructs;
+    std::string constructName = nodes[0]->getText();
+    std::cout << "Concatenating to " << constructName + ". Note that all constructs must have same the resolution in case of video or frame\n";
+    bool exists = false;
+    int idx;
+    Media media = frm::findByName(constructName, exists, idx);
+    medtype usedType = media.type;
+    for (int i = 0; i < constCount; i++)
+    {
+        Media conMed = frm::findByName(nodes[i]->getText(), exists, idx);
+        if (!exists)
+        {
+            std::cout << "Line " << ctx->start->getLine() << ": One or more of the constructs do not exist";
+            exit(0);
+        }
+        if (conMed.type != usedType)
+        {
+            std::cout << "Action at line " << ctx->start->getLine() << ": Can't concatenate unequal construct types";
+            exit(0);
+        }
+        constructs.push_back(conMed);
+    }
 
+    std::string directory;
+
+    if (ctx->STRING() != NULL)
+    {
+        directory = ctx->STRING()->getText();
+        directory = directory.substr(1, directory.length() - 2);
+        if (!std::filesystem::is_directory(directory))
+        {
+            std::cout << "Line " << ctx->start->getLine() << ": Invalid directory";
+            exit(0);
+        }
+        if (directory[directory.length() - 1] != '\\') directory.push_back('\\');
+    }
+    else
+    {
+        directory = frm::options.global_output ? frm::options.global_output_path
+            : media.directory;
+    }
+
+    if (ctx->AS() != NULL)
+    {
+        std::string newFilePath = directory + ctx->NAME()[constCount]->getText() + "." + media.format;
+        std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"));
+        for (int i = 0; i < constCount; i++)
+        {
+            cmd += +" -i \"" + constructs[i].path + "\"";
+        }
+        cmd += " -filter_complex \"";
+        if (usedType == VIDEO)
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + ":v:0]" + "[" + std::to_string(i) + ":a:0]";
+            }
+            cmd += "concat=n=" + std::to_string(constCount) + ":v=1:a=1[outv][outa]\" -vsync 2 -map \"[outv]\" -map \"[outa]\" " + newFilePath;
+        }
+        else if (usedType == AUDIO)
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + ":a]";
+            }
+            cmd += "concat=n=" + std::to_string(constCount) + ":v=0:a=1[outa]\" -map \"[outa]\" " + newFilePath;
+        }
+        else
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + "]";
+            }
+            cmd += "hstack=inputs=" + std::to_string(constCount) + "\" -vframes 1 " + newFilePath;
+        }
+        if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
+        else
+        {
+            // Suppress the system call
+            cmd += " >nul 2>nul";
+        }
+        system(cmd.c_str());
+        newFilePath = "\"" + newFilePath + "\"";
+        Media newMedia(ctx->NAME()[1]->getText(), newFilePath, media.type);
+        frm::medias.push_back(newMedia);
+    }
+    else
+    {
+        std::string newFilePath = directory + constructName + "." + media.format;
+        std::string TempFilePath = directory + constructName + "Temp." + media.format;
+        std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"));
+        for (int i = 0; i < constCount; i++)
+        {
+            cmd += +" -i \"" + constructs[i].path + "\"";
+        }
+        cmd += " -filter_complex \"";
+        if (usedType == VIDEO)
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + ":v:0]" + "[" + std::to_string(i) + ":a:0]";
+            }
+            cmd += "concat=n=" + std::to_string(constCount) + ":v=1:a=1[outv][outa]\" -vsync 2 -map \"[outv]\" -map \"[outa]\" " + TempFilePath;
+        }
+        else if (usedType == AUDIO)
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + ":a:0]";
+            }
+            cmd += "concat=n=" + std::to_string(constCount) + ":v=0:a=1[outa]\" -map \"[outa]\" " + TempFilePath;
+        }
+        else
+        {
+            for (int i = 0; i < constCount; i++)
+            {
+                cmd += "[" + std::to_string(i) + "]";
+            }
+            cmd += "hstack=inputs=" + std::to_string(constCount) + "\" -vframes 1 " + TempFilePath;
+        }
+        if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
+        else
+        {
+            // Suppress the system call
+            cmd += " >nul 2>nul";
+        }
+        system(cmd.c_str());
+        std::cout << "git";
+        std::filesystem::remove(newFilePath);
+        std::filesystem::rename(TempFilePath, newFilePath);
+        frm::medias[idx].path = newFilePath;
+    }
     return visitChildren(ctx);
 }
 
@@ -2357,6 +2490,87 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  }
 
  antlrcpp::Any FrameVisitor:: visitConverting(FrameParser::ConvertingContext* ctx)  {
+     std::string constructName = ctx->NAME()[0]->getText();
+     std::cout << "Converting format of " << constructName + "\n";
+     bool exists = false;
+     int idx;
+     Media media = frm::findByName(constructName, exists, idx);
+     if (media.type == AUDIO && ctx->AUDIO_FORMAT() == NULL)
+     {
+         std::cout << "Action at line " << ctx->start->getLine() << ": Can't convert different types";
+         exit(0);
+     }
+     else if (media.type == VIDEO && ctx->VIDEO_FORMAT() == NULL)
+     {
+         std::cout << "Action at line " << ctx->start->getLine() << ": Can't convert different types";
+         exit(0);
+     }
+     if (media.type == FRAME && ctx->IMAGE_FORMAT() == NULL)
+     {
+         std::cout << "Action at line " << ctx->start->getLine() << ": Can't convert different types";
+         exit(0);
+     }
+
+     std::string directory;
+
+     if (ctx->STRING() != NULL)
+     {
+         directory = ctx->STRING()->getText();
+         directory = directory.substr(1, directory.length() - 2);
+         if (!std::filesystem::is_directory(directory))
+         {
+             std::cout << "Line " << ctx->start->getLine() << ": Invalid directory";
+             exit(0);
+         }
+         if (directory[directory.length() - 1] != '\\') directory.push_back('\\');
+     }
+     else
+     {
+         directory = frm::options.global_output ? frm::options.global_output_path
+             : media.directory;
+     }
+
+     if (exists)
+     {
+         if (ctx->AS() != NULL)
+         {
+             std::string newFilePath = directory + ctx->NAME()[1]->getText() + "." + ctx->type->getText();
+             std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
+                 + " -i \"" + media.path + "\"" + " \"" + newFilePath + "\"";
+             if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
+             else
+             {
+                 // Suppress the system call
+                 cmd += " >nul 2>nul";
+             }
+             system(cmd.c_str());
+             newFilePath = "\"" + newFilePath + "\"";
+             Media newMedia(ctx->NAME()[1]->getText(), newFilePath, media.type);
+             frm::medias.push_back(newMedia);
+         }
+         else
+         {
+             std::string newFilePath = directory + constructName + "." + ctx->type->getText();
+             std::string TempFilePath = directory + constructName + "Temp." + ctx->type->getText();
+             std::string cmd = "ffmpeg" + (frm::options.overwrite ? std::string(" -y") : std::string(" -n"))
+                 + " -i \"" + media.path + "\"" + " \"" + TempFilePath + "\"";
+             if (frm::options.debug) std::cout << "\n\n\n" << cmd << "\n";
+             else
+             {
+                 // Suppress the system call
+                 cmd += " >nul 2>nul";
+             }
+             system(cmd.c_str());
+             std::filesystem::remove(newFilePath);
+             std::filesystem::rename(TempFilePath, newFilePath);
+             frm::medias[idx].path = newFilePath;
+         }
+     }
+     else
+     {
+         std::cout << "Line " << ctx->start->getLine() << ": Construct does not exist";
+         exit(0);
+     }
     return visitChildren(ctx);
 }
 
@@ -4030,4 +4244,3 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
      return visitChildren(ctx);
 }
-
