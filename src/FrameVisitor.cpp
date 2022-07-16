@@ -757,8 +757,17 @@ antlrcpp::Any FrameVisitor::visitCropping(FrameParser::CroppingContext* ctx) {
 }
 
 antlrcpp::Any FrameVisitor::visitOverlaying(FrameParser::OverlayingContext* ctx) {
+    if (ctx->NAME().size() < 2 || ctx->NAME()[0] == NULL || ctx->NAME()[1] == NULL
+        || ctx->NAME()[0] != ctx->children[1] || ctx->NAME()[1] != ctx->children[3]
+        || ctx->NAME()[0]->getText() == "<missing NAME>"
+        || ctx->NAME()[1]->getText() == "<missing NAME>") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": some construct is missing";
+        exit(0);
+    }
+
     std::string constructName = ctx->NAME()[0]->getText();
     std::string constructTwoName = ctx->NAME()[1]->getText();
+
     std::cout << "Overlaying " << constructName + " on " + constructTwoName + "\n";
     bool exists = false;
     bool existsTwo = false;
@@ -772,6 +781,14 @@ antlrcpp::Any FrameVisitor::visitOverlaying(FrameParser::OverlayingContext* ctx)
         exit(0);
     }
 
+    if (ctx->POSITION() != NULL) {
+        if (ctx->INT().size() < 2 || ctx->INT()[0] == NULL || ctx->INT()[1] == NULL
+            || ctx->INT()[0]->getText() == "<missing INT>" || ctx->INT()[1]->getText() == "<missing INT>"
+            ) {
+            std::cout << "Action at line " << ctx->start->getLine() << ": some position value is missing";
+            exit(0);
+        }
+    }
     std::string directory;
 
     if (ctx->STRING() != NULL)
@@ -1224,7 +1241,6 @@ antlrcpp::Any FrameVisitor::visitConcatentating(FrameParser::ConcatentatingConte
             cmd += " >nul 2>nul";
         }
         system(cmd.c_str());
-        std::cout << "git";
         std::filesystem::remove(newFilePath);
         std::filesystem::rename(TempFilePath, newFilePath);
         frm::medias[idx].path = newFilePath;
@@ -1245,6 +1261,11 @@ antlrcpp::Any FrameVisitor::visitRotating(FrameParser::RotatingContext* ctx) {
     }
 
     std::string directory;
+
+    if (ctx->INT() == NULL || (ctx->INT()->getText() == "<missing INT>")) {
+        std::cout << "Action at line " << ctx->start->getLine() << ": rotation degree value is missing";
+        exit(0);
+    }
 
     if (ctx->STRING() != NULL)
     {
@@ -1325,6 +1346,10 @@ antlrcpp::Any FrameVisitor::visitFlipping(FrameParser::FlippingContext* ctx) {
         exit(0);
     }
 
+    if (ctx->FLIP_VH() == NULL || ctx->FLIP_VH()->getText() != "vflip" && ctx->FLIP_VH()->getText() != "hflip") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": flipping value is missing";
+        exit(0);
+    }
     std::string directory;
 
     if (ctx->STRING() != NULL)
@@ -1405,6 +1430,10 @@ antlrcpp::Any FrameVisitor::visitSettingSaturation(FrameParser::SettingSaturatio
         exit(0);
     }
 
+    if (ctx->saturationValue == NULL|| ctx->saturationValue->getText() == "<missing INT>") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": saturation value is missing";
+        exit(0);
+    }
     std::string directory;
 
     if (ctx->STRING() != NULL)
@@ -1486,6 +1515,11 @@ antlrcpp::Any FrameVisitor::visitSettingGamma(FrameParser::SettingGammaContext* 
         exit(0);
     }
 
+    if (ctx->gammaValue == NULL || ctx->gammaValue->getText() == "<missing INT>") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": gamma value is missing";
+        exit(0);
+    }
+
     std::string directory;
 
     if (ctx->STRING() != NULL)
@@ -1564,6 +1598,11 @@ antlrcpp::Any FrameVisitor::visitSettingBrightness(FrameParser::SettingBrightnes
     if (media.type == AUDIO)
     {
         std::cout << "Action at line " << ctx->start->getLine() << ": Can't change brightness of an audio type";
+        exit(0);
+    }
+
+    if (ctx->brightnessValue == NULL || ctx->brightnessValue->getText() == "<missing INT>") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": brightness value is missing";
         exit(0);
     }
 
@@ -1649,6 +1688,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
         exit(0);
     }
 
+    if (ctx->contrastValue == NULL || ctx->contrastValue->getText() == "<missing INT>") {
+        std::cout << "Action at line " << ctx->start->getLine() << ": contrast value is missing";
+        exit(0);
+    }
+
     std::string directory;
 
     if (ctx->STRING() != NULL)
@@ -1722,7 +1766,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitSettingFramerate(FrameParser::SettingFramerateContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Changing framerate for " << constructName + "...\n";
+     std::cout << "Changing framerate for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -1740,6 +1784,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
          std::cout << "Action at line " << ctx->start->getLine() << ": Can't change framerate for frame type";
          exit(0);
      }
+
+     if (ctx->INT() == NULL || ctx->INT()->getText() == "<missing INT>") {
+         std::cout << "Action at line " << ctx->start->getLine() << ": framerate value is missing";
+         exit(0);
+        }
 
      std::string directory;
 
@@ -1822,7 +1871,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitSettingVolume(FrameParser::SettingVolumeContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Changing volume for " << constructName + "...\n";
+     std::cout << "Changing volume for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -1834,16 +1883,22 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
          exit(0);
      }
 
+     if (ctx->INT() == NULL || ctx->INT()->getText() == "<missing INT>") {
+         std::cout << "Action at line " << ctx->start->getLine() << ": volume value is missing";
+         exit(0);
+     }
+
      std::string directory;
 
      std::string volumeValue = ctx->INT()->getText();
      eraseSpace(volumeValue);
-     volumeValue = std::to_string(std::stod(volumeValue) / 100.0);
+     //volumeValue = std::to_string(std::stod(volumeValue) / 100.0);
 
      if (std::stod(volumeValue) > 9999999.0) {
-         std::cout << "Action at line " << ctx->start->getLine() << ": volume value has to be between -9999999.0 and 9999999.0";
+         std::cout << "Action at line " << ctx->start->getLine() << ": volume value has to be between 0.0 and 9999999.0";
          exit(0);
      }
+     volumeValue = std::to_string(std::stod(volumeValue) / 100.0);
 
      volumeValue = std::stod(volumeValue) < 100 ? '-' + volumeValue : volumeValue; // 100 = no change in audio, less than 100 means decreasing volume, more than 100 means increasing volume
 
@@ -1917,7 +1972,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitScaling(FrameParser::ScalingContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Scaling " << constructName + "...\n";
+     std::cout << "Scaling " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -1930,6 +1985,10 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      std::string directory;
+     if (ctx->INT().size() < 2 || (ctx->INT()[0]->getText() == "<missing INT>") || (ctx->INT()[1]->getText() == "<missing INT>") || (ctx->children[3] != ctx->INT()[0] && ctx->children[5] != ctx->INT()[1])) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width or height value is missing";
+             exit(0);
+     }
 
      std::string widthValue = ctx->INT()[0]->getText();
      std::string heightValue = ctx->INT()[1]->getText();
@@ -2018,7 +2077,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitExtractingNSubtitlesFromVideo(FrameParser::ExtractingNSubtitlesFromVideoContext* ctx)  {
      std::string constructName = ctx->NAME()->getText();
      //Enter action name     
-     std::cout << "Extracting subtitles from " << constructName + "...\n";
+     std::cout << "Extracting subtitles from " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2034,6 +2093,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      {
          //Error message
          std::cout << "Action at line " << ctx->start->getLine() << ": Can't extract subtitles from frame type";
+         exit(0);
+     }
+
+     if (ctx->INT() == NULL || ctx->INT()->getText() == "<missing INT>") {
+         std::cout << "Action at line " << ctx->start->getLine() << ": number of subtitles is missing";
          exit(0);
      }
 
@@ -2093,7 +2157,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitExtractingKthSubtitleFromVideo(FrameParser::ExtractingKthSubtitleFromVideoContext* ctx)  {
      std::string constructName = ctx->NAME()->getText();
      //Enter action name     
-     std::cout << "Extracting subtitles from " << constructName + "...\n";
+     std::cout << "Extracting subtitles from " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2109,6 +2173,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      {
          //Error message
          std::cout << "Action at line " << ctx->start->getLine() << ": Can't extract subtitles from frame type";
+         exit(0);
+     }
+
+     if (ctx->INT() == NULL || ctx->INT()->getText() == "<missing INT>") {
+         std::cout << "Action at line " << ctx->start->getLine() << ": subtitle number is missing";
          exit(0);
      }
 
@@ -2163,7 +2232,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitAddingSubtitlesToVideo(FrameParser::AddingSubtitlesToVideoContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Adding subtitles to " << constructName + "...\n";
+     std::cout << "Adding subtitles to " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2283,7 +2352,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Sharpening " << constructName + "...\n";
+     std::cout << "Sharpening " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2301,6 +2370,20 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string effectIntensity = "1.0";
 
      if (ctx->WIDTH() != NULL && ctx->HEIGHT() != NULL) {
+         if (ctx->INT().size() < 2) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width or height value is missing";
+             exit(0);
+         }
+         if (ctx->INT()[0]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width value is missing";
+             exit(0);
+         }
+
+         if (ctx->INT()[0]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": height value is missing";
+             exit(0);
+         }
+
          widthValue = ctx->INT()[0]->getText();
          heightValue = ctx->INT()[1]->getText();
          eraseSpace(widthValue);
@@ -2313,6 +2396,10 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      if (ctx->INTENSITY() != NULL) {
+         if ((ctx->effectAmount->getText() == "<missing INT>") || (ctx->effectAmount->getText() == "<missing FLOAT>")) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": intensity value is missing";
+             exit(0);
+         }
          effectIntensity = ctx->effectAmount->getText();
          eraseSpace(effectIntensity);
          if (std::stod(effectIntensity) > 5.0 || std::stod(effectIntensity) < 0.0) { std::cout << "Action at line " << ctx->start->getLine() << ": sharpen effect intensity value has to be between 0.0 and 5.0"; exit(0); }
@@ -2388,7 +2475,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Blurring " << constructName + "...\n";
+     std::cout << "Blurring " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2406,6 +2493,20 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string effectIntensity = "1.0";
 
      if (ctx->WIDTH() != NULL && ctx->HEIGHT() != NULL) {
+         if (ctx->INT().size() < 2) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width or height value is missing";
+             exit(0);
+         }
+
+         if (ctx->INT()[0]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width value is missing";
+             exit(0);
+         }
+
+         if (ctx->INT()[0]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": height value is missing";
+             exit(0);
+         }
          widthValue = ctx->INT()[0]->getText();
          heightValue = ctx->INT()[1]->getText();
          eraseSpace(widthValue);
@@ -2418,6 +2519,10 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      if (ctx->INTENSITY() != NULL) {
+         if ((ctx->effectAmount->getText() == "<missing INT>") || (ctx->effectAmount->getText() == "<missing FLOAT>")) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": intensity value is missing";
+             exit(0);
+         }
          effectIntensity = ctx->effectAmount->getText();
          eraseSpace(effectIntensity);
          if (std::stod(effectIntensity) > 2.0 || std::stod(effectIntensity) < 0.0) { std::cout << "Action at line " << ctx->start->getLine() << ": blur effect intensity value has to be between 0.0 and 2.0"; exit(0); }
@@ -2577,7 +2682,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitNoiseReduction(FrameParser::NoiseReductionContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Applying noise reduction on " << constructName + "...\n";
+     std::cout << "Applying noise reduction on " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2594,6 +2699,10 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string mixValue = "0";
 
      if (ctx->MIX() != NULL) {
+         if (ctx->mixValue->getText() == "<missing INT>" || ctx->mixValue->getText() == "<missing FLOAT") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": noise reduction mix value is missing";
+             exit(0);
+         }
          mixValue = ctx->mixValue->getText();
          eraseSpace(mixValue); // Check applicable boundaries
          if (std::stod(mixValue) < -1.0 || std::stod(mixValue) > 1.0) { std::cout << "Action at line " << ctx->start->getLine() << ": Noise reduction mix value has to be between -1.0 and 1.0"; exit(0); }
@@ -2688,7 +2797,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitNormalization(FrameParser::NormalizationContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Normalizing " << constructName + "...\n";
+     std::cout << "Normalizing " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2707,18 +2816,34 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string peakValue = "7";
 
      if (ctx->LOUDNESS() != NULL) {
+         if (ctx->loudnessValue->getText() == "<missing INT>"
+             || ctx->loudnessValue->getText() == "<missing FLOAT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": loudness value is missing";
+             exit(0);
+         }
+
          loudValue = ctx->loudnessValue->getText();
          eraseSpace(loudValue);
          if (std::stod(loudValue) < 0.0 || std::stod(loudValue) > 65.0) { std::cout << "Action at line " << ctx->start->getLine() << ": Normalization's loudness value has to be between 0.0 and 65.0"; exit(0); }
      }
 
      if (ctx->RANGE() != NULL) {
+         if (ctx->rangeValue->getText() == "<missing INT>"
+             || ctx->rangeValue->getText() == "<missing FLOAT>") {
+                 std::cout << "Action at line " << ctx->start->getLine() << ": range value is missing";
+                 exit(0); 
+         }
          rangeValue = ctx->rangeValue->getText();
          eraseSpace(rangeValue);
          if (std::stod(rangeValue) < 1.0 || std::stod(rangeValue) > 50.0) { std::cout << "Action at line " << ctx->start->getLine() << ": Normalization's range value has to be between 0.0 and 9.0"; exit(0); }
      }
 
      if (ctx->PEAK() != NULL) {
+         if (ctx->peakValue->getText() == "<missing INT>"
+             || ctx->peakValue->getText() == "<missing FLOAT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": peak value is missing";
+             exit(0);
+         }
          peakValue = ctx->peakValue->getText();
          eraseSpace(peakValue);
          if (std::stod(peakValue) < 0.0 || std::stod(peakValue) > 9.0) { std::cout << "Action at line " << ctx->start->getLine() << ": Normalization's peak value has to be between 0.0 and 9.0"; exit(0); }
@@ -2795,7 +2920,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor::visitSettingBass(FrameParser::SettingBassContext* ctx) {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Changing bass for " << constructName + "...\n";
+     std::cout << "Changing bass for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2812,6 +2937,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string gainValue = "0";
      std::string frequencyValue = "100";
      if (ctx->GAIN() != NULL) {
+         if (ctx->gainValue->getText() == "<missing INT>"
+             || ctx->gainValue->getText() == "<missing FLOAT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": gain value is missing";
+             exit(0);
+         }
          gainValue = ctx->gainValue->getText();
          eraseSpace(gainValue);
          gainValue = ctx->MINUS() != NULL ? '-' + gainValue : gainValue;
@@ -2819,6 +2949,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      if (ctx->FREQUENCY() != NULL) {
+         if (ctx->frequencyValue->getText() == "<missing INT>"
+             || ctx->frequencyValue->getText() == "<missing FLOAT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": frequency value is missing";
+             exit(0);
+         }
          frequencyValue = ctx->frequencyValue->getText();
          eraseSpace(frequencyValue);
          if (std::stod(frequencyValue) < 0.0 || std::stod(frequencyValue) > 999999.0) { std::cout << "Action at line " << ctx->start->getLine() << ": bass's frequency value has to be between 0.0 and 999999.0"; exit(0); }
@@ -2894,7 +3029,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitSettingTreble(FrameParser::SettingTrebleContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Changing bass for " << constructName + "...\n";
+     std::cout << "Changing bass for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -2911,6 +3046,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string gainValue = "0";
      std::string frequencyValue = "3000";
      if (ctx->GAIN() != NULL) {
+         if ((ctx->gainValue->getText() == "<missing INT>") 
+         || (ctx->gainValue->getText() == "<missing FLOAT>")){
+             std::cout << "Action at line " << ctx->start->getLine() << ": gain value is missing";
+             exit(0);
+         }
          gainValue = ctx->gainValue->getText();
          eraseSpace(gainValue);
          gainValue = ctx->MINUS() != NULL ? '-' + gainValue : gainValue;
@@ -2918,6 +3058,11 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      if (ctx->FREQUENCY() != NULL) {
+         if ((ctx->frequencyValue->getText() == "<missing INT>") 
+         || (ctx->frequencyValue->getText() == "<missing FLOAT>")) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": frequency value is missing";
+             exit(0);
+         }
          frequencyValue = ctx->frequencyValue->getText();
          eraseSpace(frequencyValue);
          if (std::stod(frequencyValue) < 0.0 || std::stod(frequencyValue) > 999999.0) { std::cout << "Action at line " << ctx->start->getLine() << ": treble's frequency value has to be between 0.0 and 999999.0"; exit(0); }
@@ -3008,11 +3153,33 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string directory;
 
-     std::string colors = ctx->COLORS() != NULL ? "colors=" + ctx->COLOR()[0]->getText() + '|' + ctx->COLOR()[1]->getText() + ":" : "";
+     std::string colors = "";
+     if (ctx->COLORS() != NULL) {
+         if ((ctx->COLOR()[0]->getText() == "<missing COLOR>") 
+         || (ctx->COLOR()[1]->getText() == "<missing COLOR>")) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": some color is missing";
+             exit(0);
+         }
+         colors = "colors=" + ctx->COLOR()[0]->getText() + '|' + ctx->COLOR()[1]->getText() + ":";
+     }
      std::string widthValue = "1024";
      std::string heightValue = "256";
 
      if (ctx->WIDTH() != NULL && ctx->HEIGHT() != NULL) {
+         if (ctx->INT().size() < 2) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width or height value is missing";
+             exit(0);
+         }
+
+         if (ctx->INT()[0]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": width value is missing";
+             exit(0);
+         }
+
+         if (ctx->INT()[1]->getText() == "<missing INT>") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": height value is missing";
+             exit(0);
+         }
          widthValue = ctx->INT()[0]->getText();
          heightValue = ctx->INT()[1]->getText();
          eraseSpace(widthValue);
@@ -3110,12 +3277,17 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
          std::cout << "Action at line " << ctx->start->getLine() << ": Can't display histogram for a frame type";
          exit(0);
      }
-
+     
      std::string directory;
      std::string displayModeValue = ctx->dmode->getText();
      if (ctx->DISPLAY() == NULL || ctx->MODE() == NULL || ctx->dmode == NULL) {
          std::cout << "Action at line " << ctx->start->getLine() << ": Incorrect syntax, display mode is missing";
          exit(0);
+     }
+
+     if (ctx->dmode->getText() != "separate" && ctx->dmode->getText() != "single") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": display mode value is missing";
+             exit(0);
      }
 
      if (ctx->STRING() != NULL)
@@ -3189,7 +3361,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Displaying phasemeter for " << constructName + "...\n";
+     std::cout << "Displaying phasemeter for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3307,14 +3479,12 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      }
 
      std::string drawingMode = "";
-     if (ctx->DRAWING() != NULL && ctx->MODE() != NULL && ctx->drawingMode != NULL) {
+     if (ctx->DRAWING() != NULL) {
+         if (ctx->drawingMode->getText() != "dot" && ctx->drawingMode->getText() != "line") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": drawing mode value is missing";
+             exit(0);
+         }
          drawingMode = ":draw= " + ctx->drawingMode->getText();
-     } 
-     else if (ctx->DRAWING() != NULL &&
-         (ctx->MODE() == NULL)) //handle ctx->drawingMode no value provided: (ctx->MODE() == NULL || ctx->drawingMode)
-     {
-         std::cout << "Line " << ctx->start->getLine() << ": Incorrect syntax";
-         exit(0);
      }
 
      if (exists)
@@ -3375,7 +3545,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Displaying Constant-Q form (CQT) for " << constructName + "...\n";
+     std::cout << "Displaying Constant-Q form (CQT) for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3464,7 +3634,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Displaying frequencies for " << constructName + "...\n";
+     std::cout << "Displaying frequencies for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3479,21 +3649,37 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string directory;
 
      std::string colors = "";
-     if (ctx->COLORS() != NULL && ctx->COLOR().size() == 2) {
-         colors = ctx->COLOR()[0]->getText() + '|' + ctx->COLOR()[1]->getText();
-     }
-     else if (ctx->COLORS() != NULL && ctx->COLOR().size() < 2) {
-         std::cout << "Action at line " << ctx->start->getLine() << ": Incorrect syntax";
+     if (ctx->COLORS() != NULL && (ctx->COLOR().size() < 2)) {
+         std::cout << "Action at line " << ctx->start->getLine() << ": some color is missing";
          exit(0);
+     }
+
+     if (ctx->COLORS() != NULL &&
+         (ctx->COLOR()[0]->getText() == "<missing COLOR>" || ctx->COLOR()[1]->getText() == "<missing COLOR>")) {
+         std::cout << "Action at line " << ctx->start->getLine() << ": some color is missing";
+         exit(0);
+     }
+
+     if (ctx->COLORS() != NULL) {
+         colors = ctx->COLOR()[0]->getText() + '|' + ctx->COLOR()[1]->getText();
      }
      
      std::string freqsDMode = "bar"; //default value
      if (ctx->DISPLAY() != NULL) {
+         if (ctx->freqsDModes->getText() != "line" && ctx->freqsDModes->getText() != "bar"
+             && ctx->freqsDModes->getText() != "dot") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": display mode value is missing";
+             exit(0);
+         }
          freqsDMode = ctx->freqsDModes->getText();
      }
 
      std::string freqsCMode = "combined"; // default value
      if (ctx->CHANNEL() != NULL) {
+         if (ctx->freqsCMode->getText() != "combined" && ctx->freqsCMode->getText() != "separate") {
+             std::cout << "Action at line " << ctx->start->getLine() << ": channel mode value is missing";
+             exit(0);
+         }
          freqsCMode = ctx->freqsCMode->getText();
      }
 
@@ -3571,7 +3757,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Displaying spatial for " << constructName + "...\n";
+     std::cout << "Displaying spatial for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3659,7 +3845,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitShowingSpectrum(FrameParser::ShowingSpectrumContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Showing spectrum for " << constructName + "...\n";
+     std::cout << "Showing spectrum for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3670,7 +3856,15 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
          std::cout << "Action at line " << ctx->start->getLine() << ": Can't show spectrum for frame type";
          exit(0);
      }
+     if (ctx->DISPLAY() == NULL || ctx->MODE() == NULL || ctx->spectrumDMode == NULL) {
+         std::cout << "Action at line " << ctx->start->getLine() << ": Incorrect syntax, display mode is missing";
+         exit(0);
+     }
 
+     if (ctx->spectrumDMode->getText() != "combined" && ctx->spectrumDMode->getText() != "separate") {
+         std::cout << "Action at line " << ctx->start->getLine() << ": display mode value is missing";
+         exit(0);
+     }
      std::string directory;
      if (ctx->STRING() != NULL)
      {
@@ -3755,7 +3949,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Showing volume for " << constructName + "...\n";
+     std::cout << "Showing volume for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3841,7 +4035,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
 
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Pixel art scaling for " << constructName + "...\n";
+     std::cout << "Pixel art scaling for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3925,7 +4119,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitSobel(FrameParser::SobelContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Sobelling " << constructName + "...\n";
+     std::cout << "Sobelling " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -3940,6 +4134,10 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
      std::string directory;
      std::string intensityValue = "1";
      if (ctx->INTENSITY() != NULL) {
+         if (ctx->INT() == NULL && ctx->FLOAT() == NULL) {
+             std::cout << "Action at line " << ctx->start->getLine() << ": intensity value is missing";
+             exit(0);
+         }
          intensityValue = ctx->intensityAmount->getText();
          eraseSpace(intensityValue);
      }
@@ -4020,7 +4218,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitMixing(FrameParser::MixingContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Mixing successive frames for " << constructName + "...\n";
+     std::cout << "Mixing successive frames for " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
@@ -4123,7 +4321,7 @@ antlrcpp::Any FrameVisitor::visitSettingContrast(FrameParser::SettingContrastCon
  antlrcpp::Any FrameVisitor:: visitEmbeddingSubtitles(FrameParser::EmbeddingSubtitlesContext* ctx)  {
      std::string constructName = ctx->NAME()[0]->getText();
      //Enter action name     
-     std::cout << "Embedding subtitles in " << constructName + "...\n";
+     std::cout << "Embedding subtitles in " << constructName + "\n";
      bool exists = false;
      int idx;
      Media media = frm::findByName(constructName, exists, idx);
