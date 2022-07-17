@@ -129,86 +129,86 @@ merge_audio_with_video_action: MERGE NAME WITH NAME (AS NAME)? (SAVE_TO STRING)?
 concatentation_action: CONCATENATE NAME+ (AS NAME)? (SAVE_TO STRING)? #concatentating
 ;
 
-rotate_action: ROTATE NAME INT (AS NAME)? (SAVE_TO STRING)? #rotating
+rotate_action: ROTATE NAME INT (AS NAME)? (SAVE_TO STRING)? #rotating //handled2
 ;
 
-flip_action: FLIP NAME FLIP_VH (AS NAME)? (SAVE_TO STRING)? #flipping
+flip_action: FLIP NAME FLIP_VH (AS NAME)? (SAVE_TO STRING)? #flipping //handled
 ;
 
-saturation_action: SET SATURATION FOR NAME saturationValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingSaturation
+saturation_action: SET SATURATION FOR NAME saturationValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingSaturation //handled2
 ;
 
-gamma_action: SET GAMMA FOR NAME gammaValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingGamma
+gamma_action: SET GAMMA FOR NAME gammaValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingGamma //handled2
 ;
 
-brightness_action: SET BRIGHTNESS FOR NAME MINUS? brightnessValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingBrightness
+brightness_action: SET BRIGHTNESS FOR NAME MINUS? brightnessValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingBrightness //handled2
 ;
 
-contrast_action: SET CONTRAST FOR NAME MINUS? contrastValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingContrast
+contrast_action: SET CONTRAST FOR NAME MINUS? contrastValue=(FLOAT | INT) (AS NAME)? (SAVE_TO STRING)? #settingContrast //handled2
 ;
 
-frame_rate_action: SET FRAME_RATE FOR NAME INT (AS NAME)? (SAVE_TO STRING)? #settingFramerate
+frame_rate_action: SET FRAME_RATE FOR NAME INT (AS NAME)? (SAVE_TO STRING)? #settingFramerate //handled2
 ;
 
-volume_action: SET VOLUME FOR NAME (INT) (AS NAME)? (SAVE_TO STRING)? #settingVolume
+volume_action: SET VOLUME FOR NAME (INT) (AS NAME)? (SAVE_TO STRING)? #settingVolume //handled2
 ;
 
-scale_action: SCALE NAME (WIDTH INT HEIGHT INT) (AS NAME)? (SAVE_TO STRING)? #scaling
+scale_action: SCALE NAME (WIDTH INT HEIGHT INT) (AS NAME)? (SAVE_TO STRING)? #scaling //handled
+; //handled2
+
+extract_N_subtitles_from_video: EXTRACT INT SUBTITLES FROM NAME SAVE_TO STRING #extractingNSubtitlesFromVideo //handled
 ;
 
-extract_N_subtitles_from_video: EXTRACT INT SUBTITLES FROM NAME SAVE_TO STRING #extractingNSubtitlesFromVideo
-;
-
-extract_Kth_subtitle_from_video: EXTRACT SUBTITLE NUMBER INT FROM NAME SAVE_TO STRING #extractingKthSubtitleFromVideo
+extract_Kth_subtitle_from_video: EXTRACT SUBTITLE NUMBER INT FROM NAME SAVE_TO STRING #extractingKthSubtitleFromVideo //handled
 ;
 
 add_subtitles_to_video: ADD SUBTITLES STRING FOR NAME (AS NAME)? (SAVE_TO STRING)? #addingSubtitlesToVideo
 ;
 
 sharpen_action: SHARPEN NAME (WIDTH INT HEIGHT INT)? (INTENSITY effectAmount=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING)? #sharpening
-;
+; //handled2
 
 blur_action: BLUR NAME (WIDTH INT HEIGHT INT)? (INTENSITY effectAmount=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING)? #blurring
-;
+; //handled2
 
 convert_action: CONVERT NAME FORMAT type=(AUDIO_FORMAT | IMAGE_FORMAT | VIDEO_FORMAT) (AS NAME)? (SAVE_TO STRING)? #converting
 ;
 
-noise_reduction_action: REDUCE NOISE FOR NAME (MIX MINUS? mixValue=(FLOAT|INT)) (AS NAME)? (SAVE_TO STRING) #noiseReduction
-;
+noise_reduction_action: REDUCE NOISE FOR NAME (MIX MINUS? mixValue=(FLOAT|INT)) (AS NAME)? (SAVE_TO STRING) #noiseReduction //handled
+; //handled2
 
 normalize_action: NORMALIZE NAME (LOUDNESS loudnessValue=(FLOAT|INT))? (RANGE rangeValue=(FLOAT|INT))? (PEAK peakValue=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING)? #normalization
-;
+; //handled2
 
 bass_action: SET BASS FOR NAME (GAIN MINUS? gainValue=(FLOAT|INT))? (FREQUENCY frequencyValue=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING) #settingBass
-;
+; //handled2
 
 treble_action: SET TREBLE FOR NAME (GAIN MINUS? gainValue=(FLOAT|INT))? (FREQUENCY frequencyValue=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING) #settingTreble
-;
+; ///handled2
 
 abitscope_action: SHOW BITSCOPE FOR NAME (COLORS COLOR COLOR)? (WIDTH INT HEIGHT INT)? (AS NAME)? (SAVE_TO STRING)? #showingBitscope
-;
+; //handled2
 
-ahistogram_action: SHOW 'audio' HISTOGRAM FOR NAME (DISPLAY MODE dmode=('single' | 'separate')) (AS NAME)? (SAVE_TO STRING)? #showingAHistogram
-;
+ahistogram_action: SHOW 'audio' HISTOGRAM FOR NAME (DISPLAY MODE dmode=('single' | 'separate')) (AS NAME)? (SAVE_TO STRING)? #showingAHistogram //partially handled
+; //handled2
 
 aphasemeter_action: SHOW PHASEMETER FOR NAME (AS NAME)? (SAVE_TO STRING)? #showingPhasemeter
 ;
 
 avectorscope_action: SHOW 'audio' VECTORSCOPE FOR NAME (DRAWING MODE drawingMode=('dot' | 'line'))? (AS NAME)? (SAVE_TO STRING)? #showingVectorscope
-;
+; //handled2
 
 showcqt_action: SHOW CQT FOR NAME (AS NAME)? (SAVE_TO STRING)? #showingCQT
 ;
 
 showfreqs_action: SHOW FREQUENCIES FOR NAME (DISPLAY MODE freqsDModes=('line' | 'bar' | 'dot'))? (COLORS COLOR COLOR)? (CHANNEL MODE freqsCMode=('combined' | 'separate') )? (AS NAME)? (SAVE_TO STRING)? #showingFreqs
-;
+; //handled2
 
 showspatial_action: SHOW SPATIAL FOR NAME (AS NAME)? (SAVE_TO STRING)? #showingSpatial
 ;
 
 showspectrum_action: SHOW SPECTRUM FOR NAME (DISPLAY MODE spectrumDMode=('combined'|'separate')) (AS NAME)? (SAVE_TO STRING)? #showingSpectrum
-;
+; //handled2
 
 showvolume_action: SHOW VOLUME FOR NAME (AS NAME)? (SAVE_TO STRING)? #showingVolume
 ;
@@ -216,8 +216,8 @@ showvolume_action: SHOW VOLUME FOR NAME (AS NAME)? (SAVE_TO STRING)? #showingVol
 super2xsai_action: SCALE PIXEL ART NAME (AS NAME)? (SAVE_TO STRING)? #scalingPixelArt
 ;
 
-sobel_action: SOBEL NAME (INTENSITY intensityAmount=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING)? #sobel
-;
+sobel_action: SOBEL NAME (INTENSITY intensityAmount=(FLOAT|INT))? (AS NAME)? (SAVE_TO STRING)? #sobel //handled
+; //handled2
 
 tmix_action: MIX 'frames' INT? FOR NAME (AS NAME)? (SAVE_TO STRING)? #mixing
 ;
