@@ -13,7 +13,7 @@ int main(int argc, const char* argv[])
     //std::ifstream infile("scripts/blur.frame");
     ////std::ifstream infile("scripts/normalize.frame");
     //std::ifstream infile("scripts/noise_reduction.frame");
-    std::ifstream infile("scripts/embed_subtitles.frame");
+    //std::ifstream infile("scripts/embed_subtitles.frame");
     //std::ifstream infile("scripts/adding_subtitles.frame");
     //std::ifstream infile("scripts/extract_N_subtitles_from_video.frame");
     //std::ifstream infile("scripts/extract_Kth_subtitles_from_video.frame");
@@ -33,6 +33,12 @@ int main(int argc, const char* argv[])
     //std::ifstream infile("scripts/mixing.frame");
     //std::ifstream infile("scripts/sobel.frame"); //done
     //std::ifstream infile("scripts/pixel_art_scaling.frame");
+    //std::ifstream infile("scripts/setting_volume.frame");
+    //std::ifstream infile("scripts/setting_saturation.frame");
+    //std::ifstream infile("scripts/setting_contrast.frame");
+    //std::ifstream infile("scripts/overlay.frame");
+    std::ifstream infile("scripts/rotate.frame");
+    //std::ifstream infile("scripts/flip.frame");
     antlr4::ANTLRInputStream input(infile);
     FrameLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
